@@ -1,0 +1,35 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+import mlflow
+import mlflow.sklearn
+import os
+
+DATA_PATH = os.path.join(
+    "namadataset_preprocessing",
+    "heart_disease_preprocessing.csv"
+)
+
+def main():
+    df = pd.read_csv(DATA_PATH)
+
+    X = df.drop(columns=["target"])
+    y = df["target"]
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+
+    with mlflow.start_run():
+        model = LogisticRegression(max_iter=500)
+        model.fit(X_train, y_train)
+
+        preds = model.predict(X_test)
+        acc = accuracy_score(y_test, preds)
+
+        mlflow.log_metric("accuracy", acc)
+        mlflow.sklearn.log_model(model, "model")
+
+if __name__ == "__main__":
+    main()
